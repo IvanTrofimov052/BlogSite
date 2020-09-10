@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
-from .models import Article
+from .models import Article, Comment
+from Account.models import Login, Session
+from datetime import datetime
 
 
 def get_article_handler(request):
@@ -43,3 +45,21 @@ def get_all_article_handler(request):
 		response_data[i] = {'article title': article_title, 'src image': article_src_img}
 	# answer json
 	return JsonResponse(response_data)
+
+
+def make_comment_handler(request):
+	# checked sesion if we doesnt have this session
+	if(Session.objects.filter(session = request.COOKIES["sessionid"])):
+		# get author name, and comment text and get article
+		author_name = Session.objects.get(session = request.COOKIES["sessionid"]).user_name
+		comment_text = request.GET['comment_text']
+		article = Article.objects.get(id=request.GET['id'])
+
+		pub_date = datetime.now()
+		# make a comment
+		comment = Comment(article=article, pub_date=pub_date, comment_text=comment_text, comment_author=author_name)
+		comment.save()
+
+		return HttpResponse('sucseful')
+	# if we havent this session
+	return HttpResponse('we havent this session')
